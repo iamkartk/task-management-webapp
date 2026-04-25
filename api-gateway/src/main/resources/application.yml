@@ -1,0 +1,17 @@
+jwt:
+  secret: mysecretkeymysecretkeymysecretkeymysecretkey
+  expiration: 3600000
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*" #health,info,metrics,prometheus,loggers,httptrace  # जरूरी endpoints
+      base-path: /actuator  # default path
+  endpoint:
+    health:
+      show-details: always
+  info:
+    env:
+      enabled: true
+    gateway:
+      enabled: true
