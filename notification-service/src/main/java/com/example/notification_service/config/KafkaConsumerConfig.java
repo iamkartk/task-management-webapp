@@ -27,7 +27,7 @@ public class KafkaConsumerConfig {
 
         Map<String, Object> config = new HashMap<>();
 
-        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");
 
         // Same groupId = same consumer group
         config.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-group");
@@ -68,7 +68,7 @@ public class KafkaConsumerConfig {
     @Bean
     public ProducerFactory<String, Object> producerFactory(){
         Map<String, Object> prop = new HashMap<>();
-        prop.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        prop.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");
         prop.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         prop.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
 
