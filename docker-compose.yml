@@ -45,7 +45,7 @@ services:
       - task-network
 
   task-service:
-    build: ./task-service
+    image: task-service:${TASK_VERSION}
     container_name: task-service
     ports:
       - "8081:8081"
