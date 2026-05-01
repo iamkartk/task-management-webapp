@@ -31,15 +31,15 @@ pipeline {
             steps {
                 // Step 3: Stop and remove old containers, pull the latest image, recreate container
                 script {
-                    sh '''
+                    withEnv(["TAG=${GIT_COMMIT_HASH}"]) {
+                        sh '''
 					cd task-service
-					GIT_COMMIT_HASH=$(git rev-parse --short HEAD)
 					docker rm -f task-service 2>/dev/null || true
             		docker compose -f ../docker-compose.yml stop task-service 2>/dev/null || true
             		docker compose -f ../docker-compose.yml rm -f task-service 2>/dev/null || true
-            		TAG=${GIT_COMMIT_HASH} docker compose -f  ../docker-compose.yml up -d --no-deps 
-            		task-service
+            		docker compose -f  ../docker-compose.yml up -d --no-deps task-service
 					'''
+                    }
                 }
             }
         }
