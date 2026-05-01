@@ -4,6 +4,7 @@ pipeline {
 	environment {
 		// Set environment variables (TASK_VERSION will be injected during build)
 		TASK_VERSION = "${BUILD_NUMBER}"
+		PATH = "$PATH:/Applications/Docker.app/Contents/Resources/bin"
 	}
 
 	stages {
@@ -22,7 +23,7 @@ pipeline {
 			steps {
 				script {
 					// Step 2: Build Docker image
-					sh 'cd task-service && /usr/local/bin/docker build -t task-service:${TASK_VERSION} .'
+					sh 'cd task-service && docker build -t task-service:${TASK_VERSION} .'
 				}
 			}
 		}
@@ -41,10 +42,10 @@ pipeline {
 				// Step 4: Stop and remove old containers, pull the latest image, and recreate container
 				script {
 					sh '''
-					/usr/local/bin/docker rm -f task-service 2>/dev/null || true
-            		/usr/local/bin/docker compose stop task-service 2>/dev/null || true
-            		/usr/local/bin/docker compose rm -f task-service 2>/dev/null || true
-            		/usr/local/bin/docker compose up -d --no-deps task-service
+					docker rm -f task-service 2>/dev/null || true
+            		docker compose stop task-service 2>/dev/null || true
+            		docker compose rm -f task-service 2>/dev/null || true
+            		docker compose up -d --no-deps task-service
 					'''
 				}
 			}
@@ -55,8 +56,8 @@ pipeline {
 				// Step 5: Clean up old Docker images, keep the latest two
 				script {
 					sh '''
-					/usr/local/bin/docker images task-service --format "{{.Tag}}" | sort -n | sed '$d' | sed '$d' | while read tag; do
-                        /usr/local/bin/docker rmi task-service:$tag 2>/dev/null || true
+					docker images task-service --format "{{.Tag}}" | sort -n | sed '$d' | sed '$d' | while read tag; do
+                        docker rmi task-service:$tag 2>/dev/null || true
                     done
 					'''
 				}
