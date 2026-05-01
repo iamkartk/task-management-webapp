@@ -45,7 +45,7 @@ services:
       - task-network
 
   task-service:
-    image: task-service:${TAG_latest}
+    image: task-service:${TAG:-latest}
     container_name: task-service
     ports:
       - "8081:8081"
