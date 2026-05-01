@@ -2,7 +2,7 @@
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-# 🚀 Microservices Task Management System
+# 🚀 Task Management System
 
 A Spring Boot based microservices system for managing tasks using event-driven architecture. 
 The system uses Apache Kafka for asynchronous communication, Eureka for service discovery, and API Gateway with JWT authentication.
