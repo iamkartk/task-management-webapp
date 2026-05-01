@@ -1,0 +1,66 @@
+pipeline {
+    agent any
+
+    environment {
+        PATH = "$PATH:/Applications/Docker.app/Contents/Resources/bin"
+        GIT_COMMIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+    }
+
+    stages {
+        stage('Build Eureka Server'){
+            steps {
+                script {
+                    sh 'cd eureka-server && /opt/homebrew/bin/mvn clean package -DskipTests'
+                }
+            }
+        }
+
+        stage('Build Docker Image'){
+            steps {
+                script {
+                    sh 'cd eureka-server && docker build -t eureka-server:${GIT_COMMIT_HASH} .'
+                }
+            }
+        }
+
+        stage('Tag as Latest'){
+            steps {
+                script {
+                    sh 'docker tag eureka-server:${GIT_COMMIT_HASH} eureka-server:latest'
+                }
+            }
+        }
+
+        stage('Deploy with Docker Compose'){
+            steps {
+                script {
+                    sh """
+                    export TAG=${GIT_COMMIT_HASH}
+                    docker rm -f eureka-server 2>/dev/null || true
+                    docker compose -f ../docker-compose.yml stop eureka-server 2>/dev/null || true
+                    docker compose -f ../docker-compose.yml rm -f eureka-server 2>/dev/null || true
+                    docker compose -f ../docker-compose.yml up -d --no-deps eureka-server
+                    """
+                }
+            }
+        }
+
+        stage('Clean up old images'){
+            steps {
+                script {
+                    sh '''
+                    docker images eureka-server --format "{{.Tag}}" | grep -v latest | sort -r | sed '1,2d' | while read tag; do
+                        docker rmi eureka-server:$tag 2>/dev/null || true
+                    done
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
