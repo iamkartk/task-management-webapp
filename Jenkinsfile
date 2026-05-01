@@ -13,7 +13,7 @@ pipeline {
 			steps {
 				// Step 1: Build the Maven project
 				script { 
-					sh 'mvn clean package -DskipTests'
+					sh '/opt/homebrew/bin/mvn clean package -DskipTests'
 				}
 			}
 		}
@@ -22,7 +22,7 @@ pipeline {
 			steps {
 				script {
 					// Step 2: Build Docker image
-					sh 'docker build -t task-service:${TASK_VERSION} .'
+					sh '/usr/local/bin/docker build -t task-service:${TASK_VERSION} .'
 				}
 			}
 		}
@@ -41,10 +41,10 @@ pipeline {
 				// Step 4: Stop and remove old containers, pull the latest image, and recreate container
 				script {
 					sh '''
-					docker compose stop task-service 2>/dev/null || true
-					docker compose rm -f task-service 2>/dev/null || true
-					docker compose pull task-service || true
-					docker compose up -d --no-deps task-service
+					/usr/local/bin/docker rm -f task-service 2>/dev/null || true
+            		/usr/local/bin/docker compose stop task-service 2>/dev/null || true
+            		/usr/local/bin/docker compose rm -f task-service 2>/dev/null || true
+            		/usr/local/bin/docker compose up -d --no-deps task-service
 					'''
 				}
 			}
@@ -55,8 +55,8 @@ pipeline {
 				// Step 5: Clean up old Docker images, keep the latest two
 				script {
 					sh '''
-					docker images task-service --format "{{.Tag}}" | sort -n | sed '$d' | sed '$d' | while read tag; do
-                        docker rmi task-service:$tag 2>/dev/null || true
+					/usr/local/bin/docker images task-service --format "{{.Tag}}" | sort -n | sed '$d' | sed '$d' | while read tag; do
+                        /usr/local/bin/docker rmi task-service:$tag 2>/dev/null || true
                     done
 					'''
 				}
