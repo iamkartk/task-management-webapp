@@ -33,9 +33,10 @@ pipeline {
                 script {
                     sh """
 					echo "Deploying with TAG=${GIT_COMMIT_HASH}"
-					cd task-service
-					docker rm -f task-service 2>/dev/null || true
-            		TAG=${GIT_COMMIT_HASH} docker compose -f ../docker-compose.yml up -d --no-deps task-service
+               		 cd task-service
+                	docker rm -f task-service 2>/dev/null || true
+                	export TAG=${GIT_COMMIT_HASH}
+                	docker compose -f ../docker-compose.yml up -d --no-deps task-service
 					"""
                 }
             }
