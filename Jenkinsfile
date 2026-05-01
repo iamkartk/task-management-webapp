@@ -13,7 +13,7 @@ pipeline {
 			steps {
 				// Step 1: Build the Maven project
 				script { 
-					sh '/opt/homebrew/bin/mvn clean package -DskipTests'
+					sh 'cd task-service && /opt/homebrew/bin/mvn clean package -DskipTests'
 				}
 			}
 		}
@@ -22,7 +22,7 @@ pipeline {
 			steps {
 				script {
 					// Step 2: Build Docker image
-					sh '/usr/local/bin/docker build -t task-service:${TASK_VERSION} .'
+					sh 'cd task-service && /usr/local/bin/docker build -t task-service:${TASK_VERSION} .'
 				}
 			}
 		}
