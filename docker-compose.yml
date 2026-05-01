@@ -37,7 +37,7 @@ services:
       - task-network
       
   eureka-server:
-    build: ./eureka-server
+    image: eureka-server:${EUREKA_VERSION:-latest}
     container_name: eureka-server
     ports:
       - "8761:8761"
@@ -45,7 +45,7 @@ services:
       - task-network
 
   task-service:
-    image: task-service:${TASK_VERSION}
+    image: task-service:${TAG_latest}
     container_name: task-service
     ports:
       - "8081:8081"
