@@ -3,15 +3,12 @@ pipeline {
 
     environment {
         PATH = "$PATH:/Applications/Docker.app/Contents/Resources/bin"
-        // Set environment variables (TASK_VERSION will be injected with Git Commit hashing)
         GIT_COMMIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
     }
 
     stages {
-
         stage('Build Maven Project') {
             steps {
-                // Step 1: Build the Maven project
                 script {
                     sh 'cd task-service && /opt/homebrew/bin/mvn clean package -DskipTests'
                 }
@@ -21,56 +18,35 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Step 2: Build Docker image
                     sh 'cd task-service && docker build -t task-service:${GIT_COMMIT_HASH} .'
-                }
-            }
-        }
-
-        stage('Tag as Latest') {
-            steps {
-                script {
-                    sh 'docker tag task-service:${GIT_COMMIT_HASH} task-service:latest'
                 }
             }
         }
 
         stage('Deploy with Docker Compose') {
             steps {
-                // Step 3: Stop and remove old containers, pull the latest image, recreate container
                 script {
                     sh """
-					echo "Deploying with TAG=${GIT_COMMIT_HASH}"
-               		 cd task-service
-                	docker rm -f task-service 2>/dev/null || true
-                	export TAG=${GIT_COMMIT_HASH}
-                	docker compose -f ../docker-compose.yml up -d --no-deps task-service
-					"""
+                    export TAG=${GIT_COMMIT_HASH}
+                    cd task-service
+                    docker compose -f ../docker-compose.yml up -d --no-deps task-service
+                    """
                 }
             }
         }
 
-        stage('Clean up old docker images and containers') {
+        stage('Clean up old images') {
             steps {
-                // Step 4: Clean up old Docker images, keep the latest two
                 script {
                     sh '''
-					docker images task-service --format "{{.Tag}}" | grep -v latest | sort -r | 
-					sed '1,2d' | while read tag; do
-                    docker rmi task-service:$tag 2>/dev/null || true
+                    # Keep only the 2 most recent images
+                    docker images task-service --format "{{.Tag}}" | sort -r | sed '1,2d' | while read tag; do
+                        docker rmi task-service:$tag 2>/dev/null || true
                     done
-					'''
+                    '''
                 }
             }
         }
-
     }
-
-    post {
-        always {
-            // Clean up workspaces, even if the pipeline fails
-            cleanWs()
-        }
-    }
-
+    post { always { cleanWs() } }
 }

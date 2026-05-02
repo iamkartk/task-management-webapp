@@ -7,7 +7,7 @@ pipeline {
     }
 
     stages {
-        stage('Build Eureka Server'){
+        stage('Build Maven Project') {
             steps {
                 script {
                     sh 'cd eureka-server && /opt/homebrew/bin/mvn clean package -DskipTests'
@@ -15,7 +15,7 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image'){
+        stage('Build Docker Image') {
             steps {
                 script {
                     sh 'cd eureka-server && docker build -t eureka-server:${GIT_COMMIT_HASH} .'
@@ -23,33 +23,24 @@ pipeline {
             }
         }
 
-        stage('Tag as Latest'){
-            steps {
-                script {
-                    sh 'docker tag eureka-server:${GIT_COMMIT_HASH} eureka-server:latest'
-                }
-            }
-        }
-
-        stage('Deploy with Docker Compose'){
+        stage('Deploy with Docker Compose') {
             steps {
                 script {
                     sh """
                     export TAG=${GIT_COMMIT_HASH}
-                    docker rm -f eureka-server 2>/dev/null || true
-                    docker compose stop eureka-server 2>/dev/null || true
-                    docker compose rm -f eureka-server 2>/dev/null || true
-                    docker compose up -d --no-deps eureka-server
+                    cd eureka-server
+                    docker compose -f ../docker-compose.yml up -d --no-deps eureka-server
                     """
                 }
             }
         }
 
-        stage('Clean up old images'){
+        stage('Clean up old images') {
             steps {
                 script {
                     sh '''
-                    docker images eureka-server --format "{{.Tag}}" | grep -v latest | sort -r | sed '1,2d' | while read tag; do
+                    # Keep only the 2 most recent images
+                    docker images eureka-server --format "{{.Tag}}" | sort -r | sed '1,2d' | while read tag; do
                         docker rmi eureka-server:$tag 2>/dev/null || true
                     done
                     '''
@@ -57,10 +48,5 @@ pipeline {
             }
         }
     }
-
-    post {
-        always {
-            cleanWs()
-        }
-    }
+    post { always { cleanWs() } }
 }

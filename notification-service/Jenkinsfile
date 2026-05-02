@@ -7,7 +7,7 @@ pipeline {
     }
 
     stages {
-        stage('Build Notification Service'){
+        stage('Build Maven Project') {
             steps {
                 script {
                     sh 'cd notification-service && /opt/homebrew/bin/mvn clean package -DskipTests'
@@ -15,7 +15,7 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image'){
+        stage('Build Docker Image') {
             steps {
                 script {
                     sh 'cd notification-service && docker build -t notification-service:${GIT_COMMIT_HASH} .'
@@ -23,33 +23,24 @@ pipeline {
             }
         }
 
-        stage('Tag as Latest'){
-            steps {
-                script {
-                    sh 'docker tag notification-service:${GIT_COMMIT_HASH} notification-service:latest'
-                }
-            }
-        }
-
-        stage('Deploy with Docker Compose'){
+        stage('Deploy with Docker Compose') {
             steps {
                 script {
                     sh """
                     export TAG=${GIT_COMMIT_HASH}
-                    docker rm -f notification-service 2>/dev/null || true
-                    docker compose stop notification-service 2>/dev/null || true
-                    docker compose rm -f notification-service 2>/dev/null || true
-                    docker compose up -d --no-deps notification-service
+                    cd notification-service
+                    docker compose -f ../docker-compose.yml up -d --no-deps notification-service
                     """
                 }
             }
         }
 
-        stage('Clean up old images'){
+        stage('Clean up old images') {
             steps {
                 script {
                     sh '''
-                    docker images notification-service --format "{{.Tag}}" | grep -v latest | sort -r | sed '1,2d' | while read tag; do
+                    # Keep only the 2 most recent images
+                    docker images notification-service --format "{{.Tag}}" | sort -r | sed '1,2d' | while read tag; do
                         docker rmi notification-service:$tag 2>/dev/null || true
                     done
                     '''
@@ -57,10 +48,5 @@ pipeline {
             }
         }
     }
-
-    post {
-        always {
-            cleanWs()
-        }
-    }
+    post { always { cleanWs() } }
 }

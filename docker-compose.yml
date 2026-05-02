@@ -37,7 +37,7 @@ services:
       - task-network
       
   eureka-server:
-    image: eureka-server:${TAG:-latest}
+    image: eureka-server:${TAG}
     container_name: eureka-server
     ports:
       - "8761:8761"
@@ -45,7 +45,7 @@ services:
       - task-network
 
   admin:
-    image: admin:${TAG:-latest}
+    image: admin:${TAG}
     container_name: admin-server
     ports:
       - "9090:9090"
@@ -57,7 +57,7 @@ services:
       - task-network    
 
   api-gateway:
-    image: api-gateway:${TAG:-latest}
+    image: api-gateway:${TAG}
     container_name: api-gateway
     ports:
       - "8080:8080"
@@ -69,7 +69,7 @@ services:
       - task-network      
 
   task-service:
-    image: task-service:${TAG:-latest}
+    image: task-service:${TAG}
     container_name: task-service
     ports:
       - "8081:8081"
@@ -86,7 +86,7 @@ services:
       - task-network
 
   notification-service:
-    image: notification-service:${TAG:-latest}
+    image: notification-service:${TAG}
     container_name: notification-service
     ports:
       - "8082:8082"
