@@ -27,6 +27,14 @@ pipeline {
             }
         }
 
+        stage('Tag as Latest'){
+            steps {
+                script {
+                    sh 'docker tag api-gateway:${GIT_COMMIT_HASH} api-gateway:latest'
+                }
+            }
+        }
+
         stage('Deploy with Docker Compose') {
             steps {
                 // Step 3: Stop and remove old containers, pull the latest image, recreate container
