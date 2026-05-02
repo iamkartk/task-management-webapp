@@ -4,7 +4,7 @@ pipeline {
     environment {
         GIT_COMMIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
         SERVICE_NAME = 'task-service'
-
+        PATH = "$PATH:/Applications/Docker.app/Contents/Resources/bin:/opt/homebrew/bin"
     }
 
     stages {
