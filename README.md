@@ -91,12 +91,18 @@ jdbc:postgresql://postgres-db:5432/Task_db
 ## 📁 Project Structure
 
 task-service/ 
+
 notification-service/ 
+
 api-gateway/ 
+
 eureka-server/ 
+
 admin-server/ 
+
 docker-compose.yml
-Jenkinsfile
+
+ARCHITECTURE.md
 
 ---
 
