@@ -44,6 +44,18 @@ services:
     networks: 
       - task-network
 
+  admin:
+    image: admin:${TAG:-latest}
+    container_name: admin-server
+    ports:
+      - "9090:9090"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
+    depends_on:
+      - eureka-server
+    networks:
+      - task-network    
+
   api-gateway:
     image: api-gateway:${TAG:-latest}
     container_name: api-gateway

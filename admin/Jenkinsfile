@@ -1,0 +1,67 @@
+pipeline {
+    agent any
+
+    environment {
+        PATH = "$PATH:/Applications/Docker.app/Contents/Resources/bin"
+        // Set environment variables (TASK_VERSION will be injected with Git Commit hashing)
+        GIT_COMMIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+    }
+
+    stages {
+
+        stage('Build Maven Project') {
+            steps {
+                // Step 1: Build the Maven project
+                script {
+                    sh 'cd admin && /opt/homebrew/bin/mvn clean package -DskipTests'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Step 2: Build Docker image
+                    sh 'cd admin && docker build -t admin:${GIT_COMMIT_HASH} .'
+                }
+            }
+        }
+
+        stage('Deploy with Docker Compose') {
+            steps {
+                // Step 3: Stop and remove old containers, pull the latest image, recreate container
+                script {
+                    sh """
+					echo "Deploying with TAG=${GIT_COMMIT_HASH}"
+               		 cd admin
+                	docker rm -f admin 2>/dev/null || true
+                	export TAG=${GIT_COMMIT_HASH}
+                	docker compose -f ../docker-compose.yml up -d --no-deps admin
+					"""
+                }
+            }
+        }
+
+        stage('Clean up old docker images and containers') {
+            steps {
+                // Step 4: Clean up old Docker images, keep the latest two
+                script {
+                    sh '''
+					docker images admin --format "{{.Tag}}" | grep -v latest | sort -r | sed '1,2d' | while read tag; do
+                    docker rmi admin:$tag 2>/dev/null || true
+                    done
+					'''
+                }
+            }
+        }
+
+    }
+
+    post {
+        always {
+            // Clean up workspaces, even if the pipeline fails
+            cleanWs()
+        }
+    }
+
+}
