@@ -13,7 +13,7 @@ pipeline {
             steps {
                 // Step 1: Build the Maven project
                 script {
-                    sh 'cd task-service && /opt/homebrew/bin/mvn clean package -DskipTests'
+                    sh 'cd api-gateway && /opt/homebrew/bin/mvn clean package -DskipTests'
                 }
             }
         }
@@ -22,7 +22,7 @@ pipeline {
             steps {
                 script {
                     // Step 2: Build Docker image
-                    sh 'cd task-service && docker build -t task-service:${GIT_COMMIT_HASH} .'
+                    sh 'cd api-gateway && docker build -t api-gateway:${GIT_COMMIT_HASH} .'
                 }
             }
         }
@@ -33,10 +33,10 @@ pipeline {
                 script {
                     sh """
 					echo "Deploying with TAG=${GIT_COMMIT_HASH}"
-               		 cd task-service
-                	docker rm -f task-service 2>/dev/null || true
+               		 cd api-gateway
+                	docker rm -f api-gateway 2>/dev/null || true
                 	export TAG=${GIT_COMMIT_HASH}
-                	docker compose -f ../docker-compose.yml up -d --no-deps task-service
+                	docker compose -f ../docker-compose.yml up -d --no-deps api-gateway
 					"""
                 }
             }
@@ -47,9 +47,9 @@ pipeline {
                 // Step 4: Clean up old Docker images, keep the latest two
                 script {
                     sh '''
-					docker images task-service --format "{{.Tag}}" | grep -v latest | sort -r | 
+					docker images api-gateway --format "{{.Tag}}" | grep -v latest | sort -r |
 					sed '1,2d' | while read tag; do
-                    docker rmi task-service:$tag 2>/dev/null || true
+                    docker rmi api-gateway:$tag 2>/dev/null || true
                     done
 					'''
                 }

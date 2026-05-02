@@ -44,6 +44,18 @@ services:
     networks: 
       - task-network
 
+  api-gateway:
+    image: api-gateway:${TAG:-latest}
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
+    depends_on:
+      - eureka-server
+    networks:
+      - task-network      
+
   task-service:
     image: task-service:${TAG:-latest}
     container_name: task-service
@@ -78,7 +90,7 @@ services:
     networks:
       - task-network
 
-      
+
 volumes:
   postgres_volume:
     external: true
