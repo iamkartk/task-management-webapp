@@ -2,51 +2,56 @@ pipeline {
     agent any
 
     environment {
-        PATH = "$PATH:/Applications/Docker.app/Contents/Resources/bin"
         GIT_COMMIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+        SERVICE_NAME = 'task-service'
+
     }
 
     stages {
         stage('Build Maven Project') {
             steps {
-                script {
-                    sh 'cd task-service && /opt/homebrew/bin/mvn clean package -DskipTests'
-                }
+                sh "cd ${SERVICE_NAME} && /opt/homebrew/bin/mvn clean package -DskipTests"
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    sh 'cd task-service && docker build -t task-service:${GIT_COMMIT_HASH} .'
-                }
+                sh "cd ${SERVICE_NAME} && docker build -t ${SERVICE_NAME}:${GIT_COMMIT_HASH} ."
             }
         }
 
         stage('Deploy with Docker Compose') {
             steps {
-                script {
-                    sh """
-                    export TAG=${GIT_COMMIT_HASH}
-                    cd task-service
-                    docker compose -f ../docker-compose.yml up -d --no-deps task-service
-                    """
-                }
+                sh """
+                    echo "🚀 Deploying ${SERVICE_NAME} with TAG = ${GIT_COMMIT_HASH}"
+                    
+                    # Remove old container
+                    docker rm -f ${SERVICE_NAME} 2>/dev/null || true
+                    
+                    # Best way to pass variable to docker compose
+                    TAG=${GIT_COMMIT_HASH} docker compose -f ../docker-compose.yml up -d --no-deps ${SERVICE_NAME}
+                """
             }
         }
 
         stage('Clean up old images') {
             steps {
-                script {
-                    sh '''
-                    # Keep only the 2 most recent images
-                    docker images task-service --format "{{.Tag}}" | sort -r | sed '1,2d' | while read tag; do
-                        docker rmi task-service:$tag 2>/dev/null || true
+                sh '''
+                    echo "🧹 Cleaning old images for ${SERVICE_NAME}..."
+                    docker images ${SERVICE_NAME} --format "{{.Tag}}" | \
+                    grep -v latest | sort -r | tail -n +3 | \
+                    while read tag; do
+                        echo "Removing ${SERVICE_NAME}:$tag"
+                        docker rmi ${SERVICE_NAME}:$tag 2>/dev/null || true
                     done
-                    '''
-                }
+                '''
             }
         }
     }
-    post { always { cleanWs() } }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
 }
