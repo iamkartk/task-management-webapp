@@ -37,7 +37,7 @@ services:
       - task-network
       
   eureka-server:
-    image: eureka-server:${EUREKA_VERSION:-latest}
+    image: eureka-server:${TAG:-latest}
     container_name: eureka-server
     ports:
       - "8761:8761"
@@ -57,9 +57,28 @@ services:
     depends_on:
       - postgres-db
       - eureka-server
+      - kafka
     networks:
-      - task-network          
+      - task-network
 
+  notification-service:
+    image: notification-service:${TAG:-latest}
+    container_name: notification-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/Task_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 1234
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka  
+    depends_on:
+      - postgres-db
+      - eureka-server
+      - kafka
+    networks:
+      - task-network
+
+      
 volumes:
   postgres_volume:
     external: true
