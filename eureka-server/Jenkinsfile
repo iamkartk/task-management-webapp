@@ -3,8 +3,9 @@ pipeline {
 
     environment {
         GIT_COMMIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-        SERVICE_NAME = 'eureka-server'
+        SERVICE_NAME    = 'eureka-server'
 
+        PATH = "$PATH:/usr/local/bin:/opt/homebrew/bin:/Applications/Docker.app/Contents/Resources/bin"
     }
 
     stages {
@@ -22,27 +23,23 @@ pipeline {
 
         stage('Deploy with Docker Compose') {
             steps {
-                sh """
-                    echo "🚀 Deploying ${SERVICE_NAME} with TAG = ${GIT_COMMIT_HASH}"
-                    
-                    # Remove old container
+                sh '''
+                    echo "🚀 Deploying ${SERVICE_NAME} with TAG=${GIT_COMMIT_HASH}"
                     docker rm -f ${SERVICE_NAME} 2>/dev/null || true
                     
-                    # Best way to pass variable to docker compose
-                    TAG=${GIT_COMMIT_HASH} docker compose -f ../docker-compose.yml up -d --no-deps ${SERVICE_NAME}
-                """
+                    cd ${WORKSPACE}
+                    TAG=${GIT_COMMIT_HASH} docker compose -f docker-compose.yml up -d --no-deps ${SERVICE_NAME}
+                '''
             }
         }
 
         stage('Clean up old images') {
             steps {
                 sh '''
-                    echo "🧹 Cleaning old images for ${SERVICE_NAME}..."
-                    docker images ${SERVICE_NAME} --format "{{.Tag}}" | \
-                    grep -v latest | sort -r | tail -n +3 | \
-                    while read tag; do
-                        echo "Removing ${SERVICE_NAME}:$tag"
-                        docker rmi ${SERVICE_NAME}:$tag 2>/dev/null || true
+                    echo "🧹 Cleaning old ${SERVICE_NAME} images, keeping latest 2..."
+                    docker images ${SERVICE_NAME} --format "{{.Tag}}" | grep -v latest | sort -r | tail -n +3 | while read tag; do
+                        echo "→ Removing ${SERVICE_NAME}:${tag}"
+                        docker rmi ${SERVICE_NAME}:${tag} 2>/dev/null || true
                     done
                 '''
             }
